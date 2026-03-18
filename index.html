@@ -660,6 +660,8 @@
           : Math.random().toString(36).slice(2) + Date.now().toString(36);
 
       sessionStorage.setItem('woodpecker_order_token', token);
+      sessionStorage.removeItem('woodpecker_order_token_used');
+
       window.location.href = `order.html?token=${encodeURIComponent(token)}`;
     });
   </script>
