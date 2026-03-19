@@ -80,7 +80,7 @@
       const email = usernameToEmail(username);
       await createUserWithEmailAndPassword(auth, email, password);
       statusEl.textContent = "Account created. Redirecting...";
-      window.location.href = "order.html";
+      window.location.href = "index.html";
     } catch (err) {
       statusEl.textContent = friendlyMessage(err);
     }
@@ -96,7 +96,7 @@
       const email = usernameToEmail(username);
       await signInWithEmailAndPassword(auth, email, password);
       statusEl.textContent = "Logged in. Redirecting...";
-      window.location.href = "order.html";
+      window.location.href = "index.html";
     } catch (err) {
       statusEl.textContent = friendlyMessage(err);
     }
