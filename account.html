@@ -370,8 +370,8 @@
             <p>Sign in to place orders and see your previous requests.</p>
 
             <div class="field">
-              <label for="signinEmail">Email</label>
-              <input type="email" id="signinEmail" required />
+              <label for="signinEmail">Username</label>
+              <input type="text" id="signinEmail" placeholder="Enter your username" required />
             </div>
 
             <div class="field">
@@ -384,7 +384,7 @@
 
           <form id="signupForm" class="hidden">
             <h2>Create your account</h2>
-            <p>Use your email and password to create a Woodpecker account.</p>
+            <p>Create a Woodpecker account with your username and password.</p>
 
             <div class="field">
               <label for="signupName">Full name</label>
@@ -392,8 +392,8 @@
             </div>
 
             <div class="field">
-              <label for="signupEmail">Email</label>
-              <input type="email" id="signupEmail" required />
+              <label for="signupEmail">Username</label>
+              <input type="text" id="signupEmail" placeholder="Choose a username" required />
             </div>
 
             <div class="field">
@@ -504,6 +504,11 @@
       authError.style.display = 'none';
     }
 
+    function buildWoodpeckerEmail(value) {
+      const username = value.trim().toLowerCase().replace(/@.*$/, '');
+      return username ? `${username}@woodpecker.local` : '';
+    }
+
     async function loadOrders(user) {
       ordersError.style.display = 'none';
       ordersList.innerHTML = '<div class="empty-state">Loading your orders...</div>';
@@ -572,7 +577,7 @@
       e.preventDefault();
       hideMessages();
 
-      const email = document.getElementById('signinEmail').value.trim();
+      const email = buildWoodpeckerEmail(document.getElementById('signinEmail').value);
       const password = document.getElementById('signinPassword').value;
 
       try {
@@ -589,7 +594,7 @@
       hideMessages();
 
       const name = document.getElementById('signupName').value.trim();
-      const email = document.getElementById('signupEmail').value.trim();
+      const email = buildWoodpeckerEmail(document.getElementById('signupEmail').value);
       const password = document.getElementById('signupPassword').value;
 
       try {
