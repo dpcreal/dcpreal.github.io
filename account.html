@@ -692,7 +692,6 @@
             : "Just now";
 
           const customerName = escapeHtml(order.customerName || user.displayName || "Unnamed customer");
-          const customerEmail = escapeHtml(order.customerEmail || user.email || "");
           const dimensions = escapeHtml(order.dimensions || "Not provided");
           const details = escapeHtml(order.details || "");
           const status = escapeHtml(order.status || "submitted");
@@ -709,7 +708,6 @@
 
               <div class="order-meta">
                 <div><strong>Submitted:</strong> ${escapeHtml(createdAt)}</div>
-                <div><strong>Email:</strong> ${customerEmail}</div>
                 <div><strong>Dimensions:</strong> ${dimensions}</div>
               </div>
 
