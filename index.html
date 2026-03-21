@@ -21,6 +21,7 @@
 
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
+
     body {
       margin: 0;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -573,7 +574,7 @@
         <a href="#about">About</a>
         <a href="#services">Services</a>
         <a href="#testimonials">Reviews</a>
-        <a href="./order.html">Order</a>
+        <a href="./order.html" id="orderNavLink">Order</a>
 
         <div class="account-menu" id="accountMenu">
           <button class="account-button" id="accountButton" aria-label="Account menu" type="button">
@@ -582,8 +583,8 @@
 
           <div class="account-dropdown" id="accountDropdown">
             <div class="account-status" id="accountStatus">Checking sign-in status...</div>
-            <a href="./account.html" id="signinOption">Sign in</a>
-            <a href="./account.html" id="signupOption">Create account</a>
+            <a href="./account.html?mode=signin" id="signinOption">Sign in</a>
+            <a href="./account.html?mode=signup" id="signupOption">Create account</a>
             <a href="./account.html" id="accountOption" style="display:none;">My account</a>
             <a href="./account.html#orders" id="ordersOption" style="display:none;">My orders</a>
             <button type="button" id="logoutOption" style="display:none;">Log out</button>
@@ -605,7 +606,7 @@
           </p>
           <div class="hero-actions">
             <a href="./order.html" class="btn btn-primary" id="orderNowBtn">Order Now</a>
-            <a href="./account.html" class="btn btn-secondary">My Account</a>
+            <a href="./account.html?mode=signin" class="btn btn-secondary">My Account</a>
           </div>
           <div class="hero-stats">
             <div class="stat">
@@ -758,7 +759,7 @@
         <a href="#about">About</a>
         <a href="#services">Services</a>
         <a href="#testimonials">Reviews</a>
-        <a href="./account.html">Account</a>
+        <a href="./account.html?mode=signin">Account</a>
       </div>
     </div>
   </footer>
@@ -767,73 +768,81 @@
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
     import { auth } from "./firebase-config.js";
 
-    const menuToggle = document.getElementById('menuToggle');
-    const navLinks = document.getElementById('navLinks');
-    const year = document.getElementById('year');
-    const orderNowBtn = document.getElementById('orderNowBtn');
-    const accountButton = document.getElementById('accountButton');
-    const accountDropdown = document.getElementById('accountDropdown');
-    const accountStatus = document.getElementById('accountStatus');
-    const signinOption = document.getElementById('signinOption');
-    const signupOption = document.getElementById('signupOption');
-    const accountOption = document.getElementById('accountOption');
-    const ordersOption = document.getElementById('ordersOption');
-    const logoutOption = document.getElementById('logoutOption');
-    const accountMenu = document.getElementById('accountMenu');
+    const menuToggle = document.getElementById("menuToggle");
+    const navLinks = document.getElementById("navLinks");
+    const year = document.getElementById("year");
+    const orderNowBtn = document.getElementById("orderNowBtn");
+    const orderNavLink = document.getElementById("orderNavLink");
+    const accountButton = document.getElementById("accountButton");
+    const accountDropdown = document.getElementById("accountDropdown");
+    const accountStatus = document.getElementById("accountStatus");
+    const signinOption = document.getElementById("signinOption");
+    const signupOption = document.getElementById("signupOption");
+    const accountOption = document.getElementById("accountOption");
+    const ordersOption = document.getElementById("ordersOption");
+    const logoutOption = document.getElementById("logoutOption");
+    const accountMenu = document.getElementById("accountMenu");
 
     let currentUser = null;
 
+    function emailToUsername(email) {
+      return String(email || "").replace(/@woodpecker\.local$/i, "");
+    }
+
     year.textContent = new Date().getFullYear();
 
-    menuToggle.addEventListener('click', () => {
-      navLinks.classList.toggle('open');
+    menuToggle.addEventListener("click", () => {
+      navLinks.classList.toggle("open");
     });
 
     document.querySelectorAll('a[href^="#"]').forEach(link => {
-      link.addEventListener('click', () => navLinks.classList.remove('open'));
+      link.addEventListener("click", () => navLinks.classList.remove("open"));
     });
 
-    accountButton.addEventListener('click', (e) => {
+    accountButton.addEventListener("click", (e) => {
       e.stopPropagation();
-      accountDropdown.classList.toggle('open');
+      accountDropdown.classList.toggle("open");
     });
 
-    document.addEventListener('click', (e) => {
+    document.addEventListener("click", (e) => {
       if (!accountMenu.contains(e.target)) {
-        accountDropdown.classList.remove('open');
+        accountDropdown.classList.remove("open");
       }
     });
 
-    orderNowBtn.addEventListener('click', function (e) {
+    function handleOrderClick(e) {
       if (!currentUser) {
         e.preventDefault();
-        window.location.href = './account.html?next=order';
+        window.location.href = "./account.html?next=order&mode=signin";
       }
-    });
+    }
 
-    logoutOption.addEventListener('click', async function () {
+    orderNowBtn.addEventListener("click", handleOrderClick);
+    orderNavLink.addEventListener("click", handleOrderClick);
+
+    logoutOption.addEventListener("click", async function () {
       await signOut(auth);
-      accountDropdown.classList.remove('open');
+      accountDropdown.classList.remove("open");
     });
 
     onAuthStateChanged(auth, (user) => {
       currentUser = user;
 
       if (user) {
-        const label = user.displayName || user.email || 'Account';
+        const label = user.displayName || emailToUsername(user.email) || "Account";
         accountStatus.textContent = `Signed in as ${label}`;
-        signinOption.style.display = 'none';
-        signupOption.style.display = 'none';
-        accountOption.style.display = 'block';
-        ordersOption.style.display = 'block';
-        logoutOption.style.display = 'block';
+        signinOption.style.display = "none";
+        signupOption.style.display = "none";
+        accountOption.style.display = "block";
+        ordersOption.style.display = "block";
+        logoutOption.style.display = "block";
       } else {
-        accountStatus.textContent = 'Guest';
-        signinOption.style.display = 'block';
-        signupOption.style.display = 'block';
-        accountOption.style.display = 'none';
-        ordersOption.style.display = 'none';
-        logoutOption.style.display = 'none';
+        accountStatus.textContent = "Guest";
+        signinOption.style.display = "block";
+        signupOption.style.display = "block";
+        accountOption.style.display = "none";
+        ordersOption.style.display = "none";
+        logoutOption.style.display = "none";
       }
     });
   </script>
