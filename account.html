@@ -4,10 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>My Account | Woodpecker Inc</title>
-  <meta
-    name="description"
-    content="Sign in to your Woodpecker Inc account and view your orders."
-  />
+  <meta name="description" content="Sign in to your Woodpecker Inc account and view your orders." />
   <style>
     :root {
       --bg: #f7f5f2;
@@ -368,6 +365,16 @@
       color: #92400e;
     }
 
+    .status-pill.in-progress {
+      background: rgba(168, 85, 247, 0.12);
+      color: #6d28d9;
+    }
+
+    .status-pill.ready {
+      background: rgba(16, 185, 129, 0.12);
+      color: #047857;
+    }
+
     .order-meta {
       display: grid;
       gap: 0.45rem;
@@ -422,9 +429,7 @@
     <section class="hero">
       <div class="tag">Account & Orders</div>
       <h1>Your Woodpecker account</h1>
-      <p>
-        Sign in to manage your profile and view the custom orders tied to your account.
-      </p>
+      <p>Sign in to manage your profile and view the custom orders tied to your account.</p>
     </section>
 
     <section class="layout">
@@ -444,23 +449,12 @@
 
             <div class="field">
               <label for="signinUsername">Username</label>
-              <input
-                type="text"
-                id="signinUsername"
-                placeholder="Enter your username"
-                autocomplete="username"
-                required
-              />
+              <input type="text" id="signinUsername" placeholder="Enter your username" autocomplete="username" required />
             </div>
 
             <div class="field">
               <label for="signinPassword">Password</label>
-              <input
-                type="password"
-                id="signinPassword"
-                autocomplete="current-password"
-                required
-              />
+              <input type="password" id="signinPassword" autocomplete="current-password" required />
             </div>
 
             <button class="btn" id="signinButton" type="submit">Sign in</button>
@@ -472,35 +466,17 @@
 
             <div class="field">
               <label for="signupName">Full name</label>
-              <input
-                type="text"
-                id="signupName"
-                placeholder="Enter your full name"
-                autocomplete="name"
-                required
-              />
+              <input type="text" id="signupName" placeholder="Enter your full name" autocomplete="name" required />
             </div>
 
             <div class="field">
               <label for="signupUsername">Username</label>
-              <input
-                type="text"
-                id="signupUsername"
-                placeholder="Choose a username"
-                autocomplete="username"
-                required
-              />
+              <input type="text" id="signupUsername" placeholder="Choose a username" autocomplete="username" required />
             </div>
 
             <div class="field">
               <label for="signupPassword">Password</label>
-              <input
-                type="password"
-                id="signupPassword"
-                minlength="6"
-                autocomplete="new-password"
-                required
-              />
+              <input type="password" id="signupPassword" minlength="6" autocomplete="new-password" required />
             </div>
 
             <button class="btn" id="signupButton" type="submit">Create account</button>
@@ -523,7 +499,7 @@
                 <span>Orders in account</span>
               </div>
               <div class="stat">
-                <strong id="accountState">Active</strong>
+                <strong>Active</strong>
                 <span>Account status</span>
               </div>
             </div>
@@ -544,6 +520,7 @@
 
         <div class="message error" id="ordersError"></div>
         <div class="message success" id="ordersSuccess"></div>
+
         <div class="orders-list" id="ordersList">
           <div class="empty-state">Sign in to view your orders.</div>
         </div>
@@ -561,6 +538,7 @@
     } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
     import {
+      arrayUnion,
       collection,
       doc,
       getDocs,
@@ -702,16 +680,15 @@
       }
 
       if (!isValidUsername(username)) {
-        throw new Error(
-          "Username must be 3 to 24 characters and only use letters, numbers, periods, underscores, or dashes."
-        );
+        throw new Error("Username must be 3 to 24 characters and only use letters, numbers, periods, underscores, or dashes.");
       }
 
       return username;
     }
 
-    function canCancel(status) {
-      return status === "submitted" || status === "reviewing";
+    function canCancel(order) {
+      const status = order.status || "submitted";
+      return order.canCancel !== false && (status === "submitted" || status === "reviewing");
     }
 
     async function cancelOrder(orderId) {
@@ -720,14 +697,21 @@
       try {
         hideMessages();
 
-        await updateDoc(
-          doc(db, "users", currentUser.uid, "orders", orderId),
-          {
+        await updateDoc(doc(db, "users", currentUser.uid, "orders", orderId), {
+          status: "cancelled",
+          progressLabel: "Cancelled",
+          canCancel: false,
+          cancellationReason: "Cancelled by customer",
+          cancelledAt: serverTimestamp(),
+          statusUpdatedAt: serverTimestamp(),
+          statusHistory: arrayUnion({
             status: "cancelled",
-            cancelledAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-          }
-        );
+            label: "Cancelled",
+            note: "Order cancelled by customer.",
+            at: new Date().toISOString(),
+            by: "customer"
+          })
+        });
 
         showOrdersSuccess("Order cancelled successfully.");
         await loadOrders(currentUser);
@@ -767,6 +751,7 @@
 
         const cards = snapshot.docs.map((docSnapshot) => {
           const order = docSnapshot.data();
+
           const createdAt = order.createdAt?.toDate
             ? order.createdAt.toDate().toLocaleString()
             : "Just now";
@@ -798,7 +783,7 @@
               </div>
 
               ${
-                canCancel(order.status || "submitted")
+                canCancel(order)
                   ? `<div class="order-actions">
                       <button class="cancel-btn" type="button" data-cancel-id="${escapeHtml(docSnapshot.id)}">
                         Cancel order
@@ -844,9 +829,7 @@
       try {
         setButtonLoading(signinButton, true, "Sign in", "Signing in...");
 
-        const username = validateUsernameOrThrow(
-          document.getElementById("signinUsername").value
-        );
+        const username = validateUsernameOrThrow(document.getElementById("signinUsername").value);
         const password = document.getElementById("signinPassword").value;
 
         if (!password) {
@@ -874,9 +857,7 @@
         setButtonLoading(signupButton, true, "Create account", "Creating account...");
 
         const fullName = document.getElementById("signupName").value.trim();
-        const username = validateUsernameOrThrow(
-          document.getElementById("signupUsername").value
-        );
+        const username = validateUsernameOrThrow(document.getElementById("signupUsername").value);
         const password = document.getElementById("signupPassword").value;
 
         if (!fullName) {
@@ -946,9 +927,7 @@
       profilePanel.classList.remove("hidden");
 
       const username = emailToUsername(user.email || "");
-      profileChip.textContent = user.displayName
-        ? `Signed in as ${user.displayName}`
-        : "Signed in";
+      profileChip.textContent = user.displayName ? `Signed in as ${user.displayName}` : "Signed in";
       profileName.textContent = user.displayName || "Woodpecker customer";
       profileUsername.textContent = username ? `Username: ${username}` : "";
 
